@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Tidak perlu 'experimental.appDir' jika tidak pakai app/
 };
 
 export default nextConfig;
