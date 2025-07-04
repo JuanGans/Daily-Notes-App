@@ -22,7 +22,7 @@ export default function NoteDetail() {
 
     async function fetchNote() {
       try {
-        const res = await fetch(`/api/notes/${id}`);
+        const res = await fetch(`http://localhost:5002/notes/${id}`);
         if (!res.ok) throw new Error('Catatan tidak ditemukan');
         const data = await res.json();
         setNote(data);

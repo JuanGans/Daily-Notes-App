@@ -14,7 +14,7 @@ export default function NoteListView() {
 
   useEffect(() => {
     async function fetchNotes() {
-      const res = await fetch('/api/notes?page=1&limit=100');
+      const res = await fetch('http://localhost:5002/notes?page=1&limit=100');
       const data = await res.json();
       setNotes(data.data);
     }

@@ -91,17 +91,17 @@ Hapus Catatan: Hapus catatan yang tidak diperlukan.
 Navigasi Sidebar: Mudah berpindah antar halaman.
 
 API Endpoints
-GET /api/notes?page=&limit= — Mengambil daftar catatan dengan pagination.
+GET http://localhost:5002/notes?page=&limit= — Mengambil daftar catatan dengan pagination.
 
-GET /api/notes/[id] — Mengambil detail catatan berdasarkan ID.
+GET http://localhost:5002/notes/[id] — Mengambil detail catatan berdasarkan ID.
 
-POST /api/notes — Menambah catatan baru.
+POST http://localhost:5002/notes — Menambah catatan baru.
 
-PUT /api/notes/[id] — Memperbarui catatan berdasarkan ID.
+PUT http://localhost:5002/notes/[id] — Memperbarui catatan berdasarkan ID.
 
-DELETE /api/notes/[id] — Menghapus catatan berdasarkan ID.
+DELETE http://localhost:5002/notes/[id] — Menghapus catatan berdasarkan ID.
 
-POST /api/notes/upload — Upload gambar, mengembalikan URL untuk disimpan pada catatan.
+POST http://localhost:5002/notes/upload — Upload gambar, mengembalikan URL untuk disimpan pada catatan.
 
 Penjelasan Singkat Kode
 NoteForm.tsx: Komponen form untuk tambah/edit catatan dengan input judul, deskripsi, tanggal mulai & selesai, dan upload gambar.
@@ -114,4 +114,4 @@ Dashboard.tsx: Menampilkan total catatan dan 3 catatan acak dengan highlight.
 
 Sidebar.tsx: Komponen navigasi vertikal dengan pilihan menu Dashboard, Tambah Catatan, dan Daftar Catatan.
 
-API Routes: File di /pages/api/notes menangani logika CRUD dan upload gambar dengan Prisma sebagai ORM.
+API Routes: File di /pageshttp://localhost:5002/notes menangani logika CRUD dan upload gambar dengan Prisma sebagai ORM.

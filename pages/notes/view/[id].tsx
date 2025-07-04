@@ -19,7 +19,7 @@ export default function NoteDetail() {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`/api/notes/${id}`)
+    fetch(`http://localhost:5002/notes/${id}`)
       .then(res => res.json())
       .then(data => setNote(data))
       .finally(() => setLoading(false));

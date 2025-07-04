@@ -17,7 +17,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function fetchNotesData() {
-      const res = await fetch('/api/notes?page=1&limit=100');
+      const res = await fetch('http://localhost:5002/notes?page=1&limit=100');
       const data = await res.json();
 
       setNotesCount(data.total);

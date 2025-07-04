@@ -29,7 +29,7 @@ export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
     formData.append('image', file);
 
     try {
-      const res = await fetch('/api/notes/upload', {
+      const res = await fetch('http://localhost:5002/notes/upload', {
         method: 'POST',
         body: formData,
       });
@@ -58,15 +58,15 @@ const handleSubmit = async (e: React.FormEvent) => {
     let res;
 
     if (initialData?.id) {
-      // mode edit: PUT ke /api/notes/[id]
-      res = await fetch(`/api/notes/${initialData.id}`, {
+      // mode edit: PUT ke http://localhost:5002/notes/[id]
+      res = await fetch(`http://localhost:5002/notes/${initialData.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
     } else {
-      // mode tambah: POST ke /api/notes
-      res = await fetch('/api/notes', {
+      // mode tambah: POST ke http://localhost:5002/notes
+      res = await fetch('http://localhost:5002/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -165,10 +165,11 @@ const handleSubmit = async (e: React.FormEvent) => {
 
       <div>
         <label className="block text-gray-700 font-semibold mb-2">Upload Gambar</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
+      <input
+        name="image" // 
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
           disabled={uploading}
           className="block w-full text-sm text-gray-600
                      file:mr-4 file:py-2 file:px-4

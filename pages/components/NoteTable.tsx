@@ -19,7 +19,7 @@ export default function NoteTable() {
 
   useEffect(() => {
     async function fetchNotes() {
-      const res = await fetch(`/api/notes?page=${page}&limit=5`);
+      const res = await fetch(`http://localhost:5002/notes?page=${page}&limit=5`);
       const data = await res.json();
       setNotes(data.data);
       setTotalPages(data.totalPages);
@@ -31,7 +31,7 @@ export default function NoteTable() {
     if (!confirm('Yakin ingin menghapus catatan ini?')) return;
 
     try {
-      const res = await fetch(`/api/notes/${id}`, { method: 'DELETE' });
+      const res = await fetch(`http://localhost:5002/notes/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Gagal menghapus catatan');
       alert('Catatan berhasil dihapus');
       setNotes(notes.filter(note => note.id !== id));

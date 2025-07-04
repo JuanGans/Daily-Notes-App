@@ -13,7 +13,7 @@ export default function ViewNotes() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/notes?page=1&limit=1000') // ambil semua
+    fetch('http://localhost:5002/notes?page=1&limit=1000') // ambil semua
       .then(res => res.json())
       .then(data => setNotes(data.data));
   }, []);

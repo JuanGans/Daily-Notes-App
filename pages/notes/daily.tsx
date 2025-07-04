@@ -20,7 +20,7 @@ export default function DailyNotes() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/notes/by-date?date=${date}`);
+      const res = await fetch(`http://localhost:5002/notes/by-date?date=${date}`);
       const data = await res.json();
       setNotes(data);
     } catch (error) {

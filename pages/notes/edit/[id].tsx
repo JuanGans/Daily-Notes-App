@@ -23,7 +23,7 @@ export default function EditNotePage() {
 
     async function fetchNote() {
       try {
-        const res = await fetch(`/api/notes/${id}`);
+        const res = await fetch(`http://localhost:5002/notes/${id}`);
         if (!res.ok) throw new Error('Gagal memuat catatan');
 
         const data = await res.json();
