@@ -1,99 +1,142 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
+import { jwtDecode } from 'jwt-decode'
 
 interface NoteFormProps {
-  onSuccess?: () => void;
+  onSuccess?: () => void
   initialData?: {
-    id?: number;
-    title?: string;
-    body?: string;
-    startDate?: string;
-    endDate?: string;
-    imageUrl?: string;
-  };
+    id?: number
+    title?: string
+    body?: string
+    startDate?: string
+    endDate?: string
+    imageUrl?: string
+  }
+}
+
+interface DecodedToken {
+  id: number
+  email: string
+  role: 'USER' | 'ADMIN'
 }
 
 export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
-  const [title, setTitle] = useState(initialData?.title || '');
-  const [body, setBody] = useState(initialData?.body || '');
-  const [startDate, setStartDate] = useState(initialData?.startDate || '');
-  const [endDate, setEndDate] = useState(initialData?.endDate || '');
-  const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || '');
-  const [uploading, setUploading] = useState(false);
+  const [title, setTitle] = useState(initialData?.title || '')
+  const [body, setBody] = useState(initialData?.body || '')
+  const [startDate, setStartDate] = useState(initialData?.startDate || '')
+  const [endDate, setEndDate] = useState(initialData?.endDate || '')
+  const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || '')
+  const [uploading, setUploading] = useState(false)
+  const [userId, setUserId] = useState<number | null>(null)
+  const router = useRouter()
+
+  // Ambil userId dari token
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    try {
+      const decoded = jwtDecode<DecodedToken>(token)
+      setUserId(decoded.id)
+    } catch (err) {
+      console.error('Token tidak valid')
+    }
+  }, [])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files?.[0]
+    if (!file) return
 
-    setUploading(true);
-    const formData = new FormData();
-    formData.append('image', file);
+    setUploading(true)
+    const formData = new FormData()
+    formData.append('image', file)
 
     try {
       const res = await fetch('http://localhost:5002/notes/upload', {
         method: 'POST',
         body: formData,
-      });
-      if (!res.ok) throw new Error('Upload gagal');
+      })
+      if (!res.ok) throw new Error('Upload gagal')
 
-      const data = await res.json();
-      setImageUrl(data.url);
+      const data = await res.json()
+      setImageUrl(data.url)
     } catch (error) {
-      alert('Gagal upload gambar');
-      console.error(error);
+      alert('Gagal upload gambar')
+      console.error(error)
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
-  };
-
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!title || !body || !startDate || !endDate) {
-    alert('Semua field wajib diisi');
-    return;
   }
 
-  const payload = { title, body, startDate, endDate, imageUrl };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-  try {
-    let res;
-
-    if (initialData?.id) {
-      // mode edit: PUT ke http://localhost:5002/notes/[id]
-      res = await fetch(`http://localhost:5002/notes/${initialData.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-    } else {
-      // mode tambah: POST ke http://localhost:5002/notes
-      res = await fetch('http://localhost:5002/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    if (!title || !body || !startDate || !endDate) {
+      alert('Semua field wajib diisi')
+      return
     }
 
-    if (!res.ok) {
-      const err = await res.json();
-      alert('Gagal menyimpan catatan: ' + err.error);
-      return;
+    if (!userId) {
+      alert('Gagal mengambil userId dari token')
+      return
     }
 
-    alert(`Catatan berhasil ${initialData?.id ? 'diupdate' : 'ditambahkan'}!`);
+    const payload = {
+      title,
+      body,
+      startDate,
+      endDate,
+      imageUrl,
+      userId, // ✅ Kirim userId
+    }
 
-    setTitle('');
-    setBody('');
-    setStartDate('');
-    setEndDate('');
-    setImageUrl('');
+    try {
+      const token = localStorage.getItem('token') || ''
+      let res
 
-    if (onSuccess) onSuccess();
-  } catch (error) {
-    alert('Terjadi kesalahan saat mengirim data');
-    console.error(error);
+      if (initialData?.id) {
+        // Edit
+        res = await fetch(`http://localhost:5002/notes/${initialData.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        })
+      } else {
+        // Tambah
+        res = await fetch('http://localhost:5002/notes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        })
+      }
+
+      if (!res.ok) {
+        const err = await res.json()
+        alert('Gagal menyimpan catatan: ' + (err.message || 'Unknown Error'))
+        return
+      }
+
+      alert(`Catatan berhasil ${initialData?.id ? 'diupdate' : 'ditambahkan'}!`)
+
+      // Reset
+      setTitle('')
+      setBody('')
+      setStartDate('')
+      setEndDate('')
+      setImageUrl('')
+      if (onSuccess) onSuccess()
+      else router.push('/') // opsional redirect
+    } catch (error) {
+      alert('Terjadi kesalahan saat mengirim data')
+      console.error(error)
+    }
   }
-};
-
 
   return (
     <form
@@ -165,11 +208,11 @@ const handleSubmit = async (e: React.FormEvent) => {
 
       <div>
         <label className="block text-gray-700 font-semibold mb-2">Upload Gambar</label>
-      <input
-        name="image" // 
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
+        <input
+          name="image"
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
           disabled={uploading}
           className="block w-full text-sm text-gray-600
                      file:mr-4 file:py-2 file:px-4
@@ -197,5 +240,5 @@ const handleSubmit = async (e: React.FormEvent) => {
         {initialData?.id ? 'Update Catatan' : 'Tambah Catatan'}
       </button>
     </form>
-  );
+  )
 }

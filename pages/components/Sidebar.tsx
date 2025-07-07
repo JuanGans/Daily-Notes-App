@@ -1,23 +1,50 @@
-import React from 'react';
+'use client' // jika kamu pakai app router, tapi aman disimpan juga di pages router
+
+import { useEffect, useState } from 'react'
 
 interface SidebarProps {
-  selectedMenu: 'dashboard' | 'form' | 'table' | 'list'; // Tambahkan 'list'
-  onSelectMenu: (menu: 'dashboard' | 'form' | 'table' | 'list') => void; // Tambahkan 'list'
+  selectedMenu: 'dashboard' | 'form' | 'table' | 'list' | 'users'
+  onSelectMenu: (menu: SidebarProps['selectedMenu']) => void
 }
 
 const menus = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'form', label: 'Tambah Catatan' },
   { id: 'table', label: 'Daftar Catatan' },
-  { id: 'list', label: 'Semua Catatan' }, // 🔥 Tambahkan ini
-];
+  { id: 'list', label: 'Semua Catatan' },
+]
+
+const adminMenus = [{ id: 'users', label: 'Kelola Pengguna' }]
 
 export default function Sidebar({ selectedMenu, onSelectMenu }: SidebarProps) {
+  const [role, setRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Ambil role dari JWT token di localStorage
+    const token = localStorage.getItem('token')
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        setRole(payload.role)
+      } catch (err) {
+        console.error('❌ Invalid token format')
+      }
+    }
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    window.location.href = '/auth/login'
+  }
+
+  // Render kosong dulu sampai role tersedia agar hindari mismatch SSR/CSR
+  if (role === null) return null
+
   return (
     <aside className="w-44 bg-white border-r border-gray-200 min-h-screen flex flex-col p-4">
       <h2 className="text-xl font-semibold mb-6 text-blue-600">My Notes</h2>
       <nav className="flex flex-col space-y-2">
-        {menus.map((menu) => (
+        {[...menus, ...(role === 'ADMIN' ? adminMenus : [])].map((menu) => (
           <button
             key={menu.id}
             onClick={() => onSelectMenu(menu.id as SidebarProps['selectedMenu'])}
@@ -31,7 +58,13 @@ export default function Sidebar({ selectedMenu, onSelectMenu }: SidebarProps) {
           </button>
         ))}
       </nav>
-      <div className="mt-auto text-xs text-gray-400 px-3 py-2">&copy; 2025 NotesApp</div>
-    </aside>
-  );
+
+      <button
+        onClick={handleLogout}
+        className="mt-auto px-3 py-2 text-sm text-red-600 hover:underline"
+      >
+        Logout
+      </button>
+    </aside>  
+  )
 }

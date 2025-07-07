@@ -1,44 +1,80 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
+import { jwtDecode } from 'jwt-decode'
 
 interface Note {
-  id: number;
-  title: string;
-  body: string;
-  startDate?: string;
-  endDate?: string;
-  imageUrl?: string;
-  createdAt: string;
+  id: number
+  title: string
+  body: string
+  startDate?: string
+  endDate?: string
+  imageUrl?: string
+  createdAt: string
+  userId: number
+}
+
+interface DecodedToken {
+  id: number
+  email: string
+  role: 'USER' | 'ADMIN'
 }
 
 export default function NoteTable() {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const router = useRouter();
+  const [notes, setNotes] = useState<Note[]>([])
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [user, setUser] = useState<DecodedToken | null>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      router.push('/auth/login')
+      return
+    }
+
+    try {
+      const decoded: DecodedToken = jwtDecode(token)
+      setUser(decoded)
+    } catch (err) {
+      console.error('Invalid token')
+      localStorage.removeItem('token')
+      router.push('/auth/login')
+    }
+  }, [router])
 
   useEffect(() => {
     async function fetchNotes() {
-      const res = await fetch(`http://localhost:5002/notes?page=${page}&limit=5`);
-      const data = await res.json();
-      setNotes(data.data);
-      setTotalPages(data.totalPages);
+      try {
+        const res = await fetch(`http://localhost:5002/notes?page=${page}&limit=5`)
+        const data = await res.json()
+        setNotes(data.data)
+        setTotalPages(data.totalPages)
+      } catch (err) {
+        console.error('Failed to fetch notes')
+      }
     }
-    fetchNotes();
-  }, [page]);
+
+    if (user) fetchNotes()
+  }, [page, user])
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Yakin ingin menghapus catatan ini?')) return;
+    if (!confirm('Yakin ingin menghapus catatan ini?')) return
 
     try {
-      const res = await fetch(`http://localhost:5002/notes/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Gagal menghapus catatan');
-      alert('Catatan berhasil dihapus');
-      setNotes(notes.filter(note => note.id !== id));
+      const res = await fetch(`http://localhost:5002/notes/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
+      })
+      if (!res.ok) throw new Error('Gagal menghapus catatan')
+      alert('Catatan berhasil dihapus')
+      setNotes(notes.filter((note) => note.id !== id))
     } catch (err) {
-      alert('Terjadi kesalahan saat menghapus');
+      alert('Terjadi kesalahan saat menghapus')
     }
-  };
+  }
 
   return (
     <section>
@@ -57,54 +93,62 @@ export default function NoteTable() {
             </tr>
           </thead>
           <tbody>
-            {notes.map((note, i) => (
-              <tr key={note.id} className="hover:bg-gray-50 text-center align-middle">
-                <td className="border px-4 py-2">{(page - 1) * 5 + i + 1}</td>
-                <td className="border px-4 py-2 text-left">{note.title}</td>
-                <td className="border px-4 py-2 text-left max-w-xs">
-                  <div className="truncate">
-                    {note.body.length > 100 ? note.body.slice(0, 100) + '...' : note.body}
-                  </div>
-                </td>
-                <td className="border px-4 py-2">{note.startDate?.slice(0, 10)}</td>
-                <td className="border px-4 py-2">{note.endDate?.slice(0, 10)}</td>
-                <td className="border px-4 py-2">
-                  {note.imageUrl ? (
-                    <img
-                      src={note.imageUrl}
-                      alt={note.title}
-                      className="max-h-20 mx-auto rounded"
-                    />
-                  ) : (
-                    '-'
-                  )}
-                </td>
-                <td className="border px-4 py-2 space-x-1">
-                  <button
-                    className="text-blue-600 hover:underline"
-                    onClick={() => router.push(`/notes/${note.id}`)}
-                  >
-                    🔍 View
-                  </button>
-                  <button
-                    className="text-yellow-600 hover:underline"
-                    onClick={() => router.push(`/notes/edit/${note.id}`)}
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    className="text-red-600 hover:underline"
-                    onClick={() => handleDelete(note.id)}
-                  >
-                    🗑 Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {notes.map((note, i) => {
+              const isOwner = user?.id === note.userId
+              const isAdmin = user?.role === 'ADMIN'
+              const canEditOrDelete = isOwner || isAdmin
+
+              return (
+                <tr key={note.id} className="hover:bg-gray-50 text-center align-middle">
+                  <td className="border px-4 py-2">{(page - 1) * 5 + i + 1}</td>
+                  <td className="border px-4 py-2 text-left">{note.title}</td>
+                  <td className="border px-4 py-2 text-left max-w-xs truncate">
+                    {note.body.length > 100 ? `${note.body.slice(0, 100)}...` : note.body}
+                  </td>
+                  <td className="border px-4 py-2">{note.startDate?.slice(0, 10)}</td>
+                  <td className="border px-4 py-2">{note.endDate?.slice(0, 10)}</td>
+                  <td className="border px-4 py-2">
+                    {note.imageUrl ? (
+                      <img
+                        src={note.imageUrl}
+                        alt={note.title}
+                        className="max-h-20 mx-auto rounded"
+                      />
+                    ) : (
+                      '-'
+                    )}
+                  </td>
+                  <td className="border px-4 py-2 space-x-1">
+                    <button
+                      className="text-blue-600 hover:underline"
+                      onClick={() => router.push(`/notes/${note.id}`)}
+                    >
+                      🔍 View
+                    </button>
+                    {canEditOrDelete && (
+                      <>
+                        <button
+                          className="text-yellow-600 hover:underline"
+                          onClick={() => router.push(`/notes/edit/${note.id}`)}
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          className="text-red-600 hover:underline"
+                          onClick={() => handleDelete(note.id)}
+                        >
+                          🗑 Delete
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
 
-        <div className="flex justify-between items-center mt-4 max-w-full">
+        <div className="flex justify-between items-center mt-4">
           <button
             onClick={() => setPage((p) => Math.max(p - 1, 1))}
             disabled={page === 1}
@@ -125,5 +169,5 @@ export default function NoteTable() {
         </div>
       </div>
     </section>
-  );
+  )
 }
