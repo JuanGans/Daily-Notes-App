@@ -9,17 +9,16 @@ datasource db {
 }
 
 model Note {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   title     String
   body      String
   imageUrl  String?
   startDate DateTime
   endDate   DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   userId    Int
-
-  NoteTags NoteTag[]
+  NoteTags  NoteTag[]
 }
 
 model Tag {
@@ -31,9 +30,8 @@ model Tag {
 model NoteTag {
   noteId Int
   tagId  Int
-
-  note Note @relation(fields: [noteId], references: [id])
-  tag  Tag  @relation(fields: [tagId], references: [id])
+  note   Note @relation(fields: [noteId], references: [id])
+  tag    Tag  @relation(fields: [tagId], references: [id])
 
   @@id([noteId, tagId])
 }

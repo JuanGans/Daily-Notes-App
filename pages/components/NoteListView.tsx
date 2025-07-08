@@ -6,6 +6,7 @@ interface Note {
   title: string;
   body: string;
   imageUrl?: string;
+  userName?: string;
 }
 
 export default function NoteListView() {
@@ -48,6 +49,9 @@ export default function NoteListView() {
             <div className="flex-1 overflow-hidden">
               <h2 className="font-semibold text-lg text-blue-700 mb-1 truncate">{note.title}</h2>
               <p className="text-gray-600 text-sm line-clamp-2">{note.body}</p>
+                <p className="text-gray-500 text-xs mt-2 italic">
+                    By: {note.userName || 'Unknown'}
+                  </p>
             </div>
           </div>
         ))}

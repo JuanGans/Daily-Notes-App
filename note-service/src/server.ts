@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 
+
 dotenv.config();
 
 const app = express();
@@ -18,12 +19,15 @@ import noteRoutes from './routes/notes';
 import noteByIdRoutes from './routes/notes/by-id';
 import byDateRoutes from './routes/notes/by-date';
 import uploadRoutes from './routes/notes/upload';
+import crudRoutes from './routes/notes/crud'
+
 
 // Register routes
 app.use('/notes', noteRoutes);
 app.use('/notes', noteByIdRoutes);
 app.use('/notes', byDateRoutes);
 app.use('/notes', uploadRoutes);
+app.use('/notes', crudRoutes)
 
 // Start server
 const PORT = process.env.PORT || 5002;

@@ -6,6 +6,7 @@ interface Note {
   title: string;
   body: string;
   imageUrl?: string;
+  userName?: string; // Tambahkan field authorName
 }
 
 export default function ViewNotes() {
@@ -19,12 +20,31 @@ export default function ViewNotes() {
   }, []);
 
   return (
-    <div className="p-6 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
       {notes.map(note => (
-        <div key={note.id} className="bg-white rounded shadow p-4 cursor-pointer hover:shadow-lg transition" onClick={() => router.push(`/notes/view/${note.id}`)}>
-          <h2 className="text-lg font-bold">{note.title}</h2>
-          <p className="text-sm text-gray-600 line-clamp-2">{note.body}</p>
-          {note.imageUrl && <img src={note.imageUrl} alt={note.title} className="mt-2 rounded max-h-40 object-cover w-full" />}
+        <div 
+          key={note.id}
+          className="cursor-pointer border rounded-lg p-4 shadow-sm hover:shadow-md transition hover:scale-[1.01] bg-white flex gap-4"
+          onClick={() => router.push(`/notes/view/${note.id}`)}
+        >
+          {note.imageUrl && (
+            <img 
+              alt={note.title} 
+              className="w-24 h-24 object-cover rounded-md" 
+              src={note.imageUrl}
+            />
+          )}
+          <div className="flex-1 overflow-hidden">
+  <h2 className="font-semibold text-lg text-blue-700 mb-1 truncate">
+    {note.title}
+  </h2>
+  <p className="text-gray-600 text-sm line-clamp-2">
+    {note.body}
+  </p>
+  <p className="text-gray-600 text-sm line-clamp-2">
+    {note.userName || 'Unknown'}
+  </p>
+</div>
         </div>
       ))}
     </div>

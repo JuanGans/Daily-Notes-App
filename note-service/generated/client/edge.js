@@ -165,7 +165,7 @@ const config = {
   },
   "relativeEnvPaths": {
     "rootEnvPath": null,
-    "schemaEnvPath": "../../prisma/.env"
+    "schemaEnvPath": "../../.env"
   },
   "relativePath": "../../prisma",
   "clientVersion": "6.11.1",
@@ -183,8 +183,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/client\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL_NOTE\")\n}\n\nmodel Note {\n  id        Int      @id @default(autoincrement())\n  title     String\n  body      String\n  imageUrl  String?\n  startDate DateTime\n  endDate   DateTime\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  userId    Int\n\n  NoteTags NoteTag[]\n}\n\nmodel Tag {\n  id    Int       @id @default(autoincrement())\n  name  String    @unique\n  notes NoteTag[]\n}\n\nmodel NoteTag {\n  noteId Int\n  tagId  Int\n\n  note Note @relation(fields: [noteId], references: [id])\n  tag  Tag  @relation(fields: [tagId], references: [id])\n\n  @@id([noteId, tagId])\n}\n",
-  "inlineSchemaHash": "41416de6c6b4c936d8296a34f5dce27df86117b98a8e7eda833f42bd14fa9372",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/client\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL_NOTE\")\n}\n\nmodel Note {\n  id        Int       @id @default(autoincrement())\n  title     String\n  body      String\n  imageUrl  String?\n  startDate DateTime\n  endDate   DateTime\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  userId    Int\n  NoteTags  NoteTag[]\n}\n\nmodel Tag {\n  id    Int       @id @default(autoincrement())\n  name  String    @unique\n  notes NoteTag[]\n}\n\nmodel NoteTag {\n  noteId Int\n  tagId  Int\n  note   Note @relation(fields: [noteId], references: [id])\n  tag    Tag  @relation(fields: [tagId], references: [id])\n\n  @@id([noteId, tagId])\n}\n",
+  "inlineSchemaHash": "156a854c2f72bce0b78270d4275a6de38e5d12540fc81af0ef0ea8d00eb86125",
   "copyEngine": true
 }
 config.dirname = '/'

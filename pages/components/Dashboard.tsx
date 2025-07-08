@@ -7,6 +7,7 @@ interface Note {
   body: string;
   imageUrl?: string;
   createdAt: string;
+  userName?: string;
 }
 
 export default function Dashboard() {
@@ -86,6 +87,9 @@ export default function Dashboard() {
                 <p className="text-gray-600 text-sm line-clamp-3">
                   {note.body.length > 100 ? note.body.slice(0, 100) + '...' : note.body}
                 </p>
+                  <p className="text-gray-500 text-xs mt-2 italic">
+    By: {note.userName || 'Unknown'}
+  </p>
               </div>
             ))}
           </div>

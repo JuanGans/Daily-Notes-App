@@ -27,19 +27,30 @@ export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
   const [endDate, setEndDate] = useState(initialData?.endDate || '')
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || '')
   const [uploading, setUploading] = useState(false)
-  const [userId, setUserId] = useState<number | null>(null)
+  const [userName, setUserName] = useState<string>('')
+
   const router = useRouter()
 
-  // Ambil userId dari token
+  // Ambil nama user dari token JWT
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
 
     try {
       const decoded = jwtDecode<DecodedToken>(token)
-      setUserId(decoded.id)
-    } catch (err) {
-      console.error('Token tidak valid')
+      const userId = decoded.id
+
+      // Fetch nama user dari user-service
+      fetch(`http://localhost:5001/users/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then(res => res.json())
+        .then(data => setUserName(data.name || 'Pengguna'))
+        .catch(() => setUserName('Pengguna'))
+    } catch {
+      setUserName('Pengguna')
     }
   }, [])
 
@@ -56,13 +67,11 @@ export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
         method: 'POST',
         body: formData,
       })
-      if (!res.ok) throw new Error('Upload gagal')
 
       const data = await res.json()
       setImageUrl(data.url)
-    } catch (error) {
+    } catch (err) {
       alert('Gagal upload gambar')
-      console.error(error)
     } finally {
       setUploading(false)
     }
@@ -76,26 +85,20 @@ export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
       return
     }
 
-    if (!userId) {
-      alert('Gagal mengambil userId dari token')
-      return
-    }
-
-    const payload = {
-      title,
-      body,
-      startDate,
-      endDate,
-      imageUrl,
-      userId, // ✅ Kirim userId
-    }
-
     try {
       const token = localStorage.getItem('token') || ''
       let res
 
+      const payload = {
+        title,
+        body,
+        startDate,
+        endDate,
+        imageUrl,
+        // Tidak perlu kirim userId, backend ambil dari token
+      }
+
       if (initialData?.id) {
-        // Edit
         res = await fetch(`http://localhost:5002/notes/${initialData.id}`, {
           method: 'PUT',
           headers: {
@@ -105,7 +108,6 @@ export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
           body: JSON.stringify(payload),
         })
       } else {
-        // Tambah
         res = await fetch('http://localhost:5002/notes', {
           method: 'POST',
           headers: {
@@ -118,23 +120,15 @@ export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
 
       if (!res.ok) {
         const err = await res.json()
-        alert('Gagal menyimpan catatan: ' + (err.message || 'Unknown Error'))
+        alert('Gagal menyimpan catatan: ' + (err.message || 'Unknown error'))
         return
       }
 
-      alert(`Catatan berhasil ${initialData?.id ? 'diupdate' : 'ditambahkan'}!`)
-
-      // Reset
-      setTitle('')
-      setBody('')
-      setStartDate('')
-      setEndDate('')
-      setImageUrl('')
+      alert('Catatan berhasil disimpan!')
       if (onSuccess) onSuccess()
-      else router.push('/') // opsional redirect
-    } catch (error) {
+      else router.push('/')
+    } catch (err) {
       alert('Terjadi kesalahan saat mengirim data')
-      console.error(error)
     }
   }
 
@@ -143,9 +137,16 @@ export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
       onSubmit={handleSubmit}
       className="max-w-xl mx-auto bg-white p-6 rounded-lg shadow-lg space-y-6"
     >
-      <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+      <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">
         {initialData?.id ? 'Edit Catatan' : 'Tambah Catatan'}
       </h2>
+
+      {/* ✅ Nama user */}
+      {userName && (
+        <p className="text-center text-sm text-gray-600 mb-4">
+          Dibuat oleh: <strong>{userName}</strong>
+        </p>
+      )}
 
       <div>
         <label htmlFor="title" className="block text-gray-700 font-semibold mb-2">
@@ -219,8 +220,7 @@ export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
                      file:rounded-md file:border-0
                      file:text-sm file:font-semibold
                      file:bg-blue-100 file:text-blue-700
-                     hover:file:bg-blue-200
-                     cursor-pointer"
+                     hover:file:bg-blue-200 cursor-pointer"
         />
         {uploading && <p className="text-sm text-gray-500 mt-2">Uploading...</p>}
         {imageUrl && (

@@ -11,6 +11,7 @@ interface Note {
   imageUrl?: string
   createdAt: string
   userId: number
+  userName?: string
 }
 
 interface DecodedToken {
@@ -26,6 +27,7 @@ export default function NoteTable() {
   const [user, setUser] = useState<DecodedToken | null>(null)
   const router = useRouter()
 
+  // Ambil data user dari token
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) {
@@ -43,15 +45,24 @@ export default function NoteTable() {
     }
   }, [router])
 
+  // Ambil daftar catatan
   useEffect(() => {
     async function fetchNotes() {
       try {
-        const res = await fetch(`http://localhost:5002/notes?page=${page}&limit=5`)
+        const token = localStorage.getItem('token') || ''
+        const res = await fetch(`http://localhost:5002/notes?page=${page}&limit=5`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        if (!res.ok) {
+          throw new Error('Gagal fetch catatan')
+        }
+
         const data = await res.json()
-        setNotes(data.data)
-        setTotalPages(data.totalPages)
+        setNotes(data.data || [])
+        setTotalPages(data.totalPages || 1)
       } catch (err) {
-        console.error('Failed to fetch notes')
+        console.error('Failed to fetch notes:', err)
       }
     }
 
@@ -62,12 +73,12 @@ export default function NoteTable() {
     if (!confirm('Yakin ingin menghapus catatan ini?')) return
 
     try {
+      const token = localStorage.getItem('token') || ''
       const res = await fetch(`http://localhost:5002/notes/${id}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
+
       if (!res.ok) throw new Error('Gagal menghapus catatan')
       alert('Catatan berhasil dihapus')
       setNotes(notes.filter((note) => note.id !== id))
@@ -84,6 +95,7 @@ export default function NoteTable() {
           <thead className="bg-blue-100 text-gray-700">
             <tr>
               <th className="border px-4 py-2 text-center">No</th>
+              <th className="border px-4 py-2 text-center">Author</th>
               <th className="border px-4 py-2">Judul</th>
               <th className="border px-4 py-2">Deskripsi</th>
               <th className="border px-4 py-2 text-center">Tanggal Mulai</th>
@@ -101,6 +113,7 @@ export default function NoteTable() {
               return (
                 <tr key={note.id} className="hover:bg-gray-50 text-center align-middle">
                   <td className="border px-4 py-2">{(page - 1) * 5 + i + 1}</td>
+                  <td className="border px-4 py-2">{note.userName ?? 'Unknown'}</td>
                   <td className="border px-4 py-2 text-left">{note.title}</td>
                   <td className="border px-4 py-2 text-left max-w-xs truncate">
                     {note.body.length > 100 ? `${note.body.slice(0, 100)}...` : note.body}
