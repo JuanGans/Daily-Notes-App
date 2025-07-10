@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { MessageSquare } from 'lucide-react';
 
 interface Note {
   id: number;
@@ -14,6 +15,7 @@ export default function Dashboard() {
   const [notesCount, setNotesCount] = useState(0);
   const [randomNotes, setRandomNotes] = useState<Note[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [commentCounts, setCommentCounts] = useState<Record<number, number>>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -39,6 +41,28 @@ export default function Dashboard() {
 
     fetchNotesData();
   }, []);
+
+  useEffect(() => {
+    async function fetchCommentCounts() {
+      const counts: Record<number, number> = {};
+
+      await Promise.all(
+        randomNotes.map(async (note) => {
+          try {
+            const res = await fetch(`http://localhost:5003/comments/note/${note.id}`);
+            const data = await res.json();
+            counts[note.id] = data.length;
+          } catch {
+            counts[note.id] = 0;
+          }
+        })
+      );
+
+      setCommentCounts(counts);
+    }
+
+    if (randomNotes.length > 0) fetchCommentCounts();
+  }, [randomNotes]);
 
   return (
     <section>
@@ -70,7 +94,7 @@ export default function Dashboard() {
               <div
                 key={note.id}
                 onClick={() => router.push(`/notes/${note.id}`)}
-                className="border rounded-lg p-3 bg-gray-50 hover:shadow cursor-pointer transition"
+                className="relative border rounded-lg p-3 bg-gray-50 hover:shadow cursor-pointer transition"
               >
                 {note.imageUrl ? (
                   <img
@@ -83,13 +107,20 @@ export default function Dashboard() {
                     No Image
                   </div>
                 )}
+
                 <h3 className="font-bold text-blue-700 mb-1 truncate">{note.title}</h3>
                 <p className="text-gray-600 text-sm line-clamp-3">
                   {note.body.length > 100 ? note.body.slice(0, 100) + '...' : note.body}
                 </p>
-                  <p className="text-gray-500 text-xs mt-2 italic">
-    By: {note.userName || 'Unknown'}
-  </p>
+                <p className="text-gray-500 text-xs mt-2 italic">
+                  By: {note.userName || 'Unknown'}
+                </p>
+
+                {/* Komentar pojok kanan bawah */}
+                <div className="absolute bottom-2 right-3 flex items-center text-gray-500 text-xs gap-1">
+                  <MessageSquare className="w-4 h-4" />
+                  {commentCounts[note.id] ?? 0}
+                </div>
               </div>
             ))}
           </div>

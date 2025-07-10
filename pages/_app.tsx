@@ -1,6 +1,7 @@
-import '../styles/globals.css'
-import type { AppProps } from 'next/app'
-import { Toaster } from 'react-hot-toast'
+// _app.tsx
+import '../styles/globals.css'; // ✅ global stylesheet
+import type { AppProps } from 'next/app';
+import { Toaster } from 'react-hot-toast';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
@@ -8,5 +9,5 @@ export default function App({ Component, pageProps }: AppProps) {
       <Toaster position="top-right" />
       <Component {...pageProps} />
     </>
-  )
+  );
 }

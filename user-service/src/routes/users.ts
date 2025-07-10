@@ -235,7 +235,7 @@
     }
   })
 
-  // ✅ Login user
+// ✅ Login user
 router.post('/login', async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
 
@@ -262,13 +262,16 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       {
         id: user.id,
         email: user.email,
+        name: user.name,
         role: user.role,
       },
       JWT_SECRET,
       { expiresIn: '2h' }
     );
 
+    // ✅ Hanya satu response
     res.status(200).json({ token });
+
   } catch (error) {
     console.error('❌ Error saat login:', error);
     res.status(500).json({ message: 'Terjadi kesalahan di server' });

@@ -8,6 +8,7 @@ import {
   LogOut,
 } from 'lucide-react'
 import { useRouter } from 'next/router'
+import InteractiveLogo from '../components/InteractiveLogo/InteractiveLogo'
 
 interface SidebarProps {
   selectedMenu: 'dashboard' | 'form' | 'table' | 'list' | 'users'
@@ -25,6 +26,7 @@ const adminMenus = [{ id: 'users', label: 'Kelola Pengguna', icon: Users }]
 
 export default function Sidebar({ selectedMenu, onSelectMenu }: SidebarProps) {
   const [role, setRole] = useState<string | null>(null)
+  const [isOpen, setIsOpen] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
@@ -53,6 +55,8 @@ export default function Sidebar({ selectedMenu, onSelectMenu }: SidebarProps) {
     }
   }
 
+  const toggleSidebar = () => setIsOpen((prev) => !prev)
+
   if (role === null) {
     return (
       <div className="flex justify-center items-center h-screen w-full">
@@ -62,39 +66,51 @@ export default function Sidebar({ selectedMenu, onSelectMenu }: SidebarProps) {
   }
 
   return (
-    <aside className="w-44 bg-white border-r border-gray-200 min-h-screen flex flex-col p-4">
-      <img
-        src="https://i.ibb.co/JFv8xxpc/image.png"
-        alt="My Notes Logo"
-        className="h-10 w-auto mb-6 mx-auto"
+    <aside
+      className={`${
+        isOpen ? 'w-64' : 'w-20'
+      } bg-white border-r border-gray-200 min-h-screen flex flex-col p-4 transition-all duration-300`}
+    >
+      {/* Logo interaktif juga sebagai tombol toggle */}
+      <InteractiveLogo
+        className="mb-6 mx-auto"
+        size="6px"
+        isOpen={isOpen}
+        toggle={toggleSidebar}
       />
 
-      <nav className="flex flex-col space-y-2">
-        {[...menus, ...(role === 'ADMIN' ? adminMenus : [])].map((menu) => {
-          const Icon = menu.icon
-          return (
-            <button
-              key={menu.id}
-              onClick={() => onSelectMenu(menu.id as SidebarProps['selectedMenu'])}
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors duration-200 text-left ${
-                selectedMenu === menu.id
-                  ? 'bg-blue-600 text-white font-semibold shadow'
-                  : 'text-gray-700 hover:bg-blue-100'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {menu.label}
-            </button>
-          )
-        })}
-      </nav>
+      {/* Menu tampil jika sidebar terbuka */}
+      {isOpen && (
+        <nav className="flex flex-col space-y-2">
+          {[...menus, ...(role === 'ADMIN' ? adminMenus : [])].map((menu) => {
+            const Icon = menu.icon
+            return (
+              <button
+                key={menu.id}
+                onClick={() => onSelectMenu(menu.id as SidebarProps['selectedMenu'])}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors duration-200 text-left ${
+                  selectedMenu === menu.id
+                    ? 'bg-blue-600 text-white font-semibold shadow'
+                    : 'text-gray-700 hover:bg-blue-100'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {menu.label}
+              </button>
+            )
+          })}
+        </nav>
+      )}
 
       <button
         onClick={handleLogout}
-        className="mt-auto flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:underline"
+        className={`mt-auto flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:underline ${
+          !isOpen ? 'justify-center' : ''
+        }`}
+        title="Logout"
       >
         <LogOut className="w-4 h-4" />
-        Logout
+        {isOpen && 'Logout'}
       </button>
     </aside>
   )

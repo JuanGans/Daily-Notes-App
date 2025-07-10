@@ -7,7 +7,6 @@ const router = Router()
 const prisma = new PrismaClient()
 const JWT_SECRET = process.env.JWT_SECRET || 'defaultsecret'
 
-// ✅ Tipe request dengan user (hasil decode JWT)
 interface RequestWithUser extends Request {
   user?: {
     id: number
@@ -16,7 +15,7 @@ interface RequestWithUser extends Request {
   }
 }
 
-// ✅ Middleware autentikasi
+// Middleware autentikasi
 const authenticateToken = (req: RequestWithUser, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization
   const token = authHeader?.split(' ')[1]
@@ -35,23 +34,23 @@ const authenticateToken = (req: RequestWithUser, res: Response, next: NextFuncti
   }
 }
 
-// ✅ Function untuk generate service token (admin token)
+// Generate service token (digunakan untuk inter-service fetch)
 const generateServiceToken = () => {
-  // Buat token dengan role admin untuk internal service communication
   const serviceUser = {
-    id: 0, // Service user ID
+    id: 0,
     email: 'service@internal.com',
     role: 'ADMIN'
   }
-  
+
   return jwt.sign(serviceUser, JWT_SECRET, { expiresIn: '5m' })
 }
 
-// ✅ GET /notes — Terbuka untuk semua user dengan service token untuk fetch user data
+// ✅ GET /notes — Daftar catatan lengkap dengan user name dan jumlah komentar
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   const page = parseInt(req.query.page as string) || 1
-  const limit = parseInt(req.query.limit as string) || 5
-  const offset = (page - 1) * limit
+  const rawLimit = req.query.limit as string
+  const limit = rawLimit === 'all' ? undefined : parseInt(rawLimit) || 5
+  const offset = limit ? (page - 1) * limit : undefined
 
   try {
     const [notes, total] = await Promise.all([
@@ -75,28 +74,40 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 
     const uniqueUserIds = [...new Set(notes.map((note) => note.userId))]
     const userMap: Record<number, string> = {}
+    const commentCountMap: Record<number, number> = {}
 
-    // Generate service token untuk fetch user data
     const serviceToken = generateServiceToken()
 
+    // Ambil nama user dari user-service
     await Promise.all(
       uniqueUserIds.map(async (userId) => {
         try {
-          // Gunakan service token untuk mengakses user data
-          const response = await fetch(`http://localhost:5001/users/${userId}`, {
+          const res = await fetch(`http://localhost:5001/users/${userId}`, {
             headers: { Authorization: `Bearer ${serviceToken}` }
           })
-
-          if (response.ok) {
-            const user = await response.json() as { id: number; name: string }
+          if (res.ok) {
+            const user = await res.json() as { id: number; name: string }
             userMap[userId] = user.name
           } else {
-            console.error(`❌ Failed to fetch user ${userId}:`, response.status)
             userMap[userId] = 'Unknown'
           }
-        } catch (error) {
-          console.error(`❌ Error fetching user ${userId}:`, error)
+        } catch (err) {
+          console.error(`❌ Gagal ambil user ${userId}:`, err)
           userMap[userId] = 'Unknown'
+        }
+      })
+    )
+
+    // Hitung komentar dari comment-service
+    await Promise.all(
+      notes.map(async (note) => {
+        try {
+          const res = await fetch(`http://localhost:5003/comments/count/${note.id}`)
+          const data = await res.json() as { total: number }
+          commentCountMap[note.id] = data.total || 0
+        } catch (err) {
+          console.error(`❌ Gagal hitung komentar note ${note.id}:`, err)
+          commentCountMap[note.id] = 0
         }
       })
     )
@@ -104,13 +115,14 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     const notesWithUser = notes.map((note) => ({
       ...note,
       userName: userMap[note.userId] || 'Unknown',
+      totalComments: commentCountMap[note.id] || 0,
     }))
 
     res.json({
       data: notesWithUser,
       total,
       page,
-      totalPages: Math.ceil(total / limit),
+      totalPages: limit ? Math.ceil(total / limit) : 1,
     })
   } catch (err) {
     console.error('❌ Error fetching notes:', err)
@@ -118,7 +130,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
   }
 })
 
-// ✅ POST /notes — Buat note baru (harus autentikasi)
+// ✅ POST /notes — Tambah note
 router.post('/', authenticateToken, async (req: RequestWithUser, res: Response): Promise<void> => {
   try {
     const { title, body, startDate, endDate, imageUrl } = req.body
@@ -152,7 +164,7 @@ router.post('/', authenticateToken, async (req: RequestWithUser, res: Response):
   }
 })
 
-// ✅ DELETE /notes/:id — Hanya pemilik atau admin yang boleh hapus
+// ✅ DELETE /notes/:id — Hapus note
 router.delete('/:id', authenticateToken, async (req: RequestWithUser, res: Response): Promise<void> => {
   const noteId = parseInt(req.params.id, 10)
   const userId = req.user?.id

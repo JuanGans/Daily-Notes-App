@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/client"
 }
 
 datasource db {
@@ -13,5 +12,6 @@ model Comment {
   content   String
   noteId    Int
   userId    Int
+  userName  String   // ✅ Tambahkan field denormalisasi
   createdAt DateTime @default(now())
 }
