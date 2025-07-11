@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { MessageSquare } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface Note {
   id: number;
@@ -56,9 +57,12 @@ export default function NoteListView() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-      {notes.map((note) => (
-        <div
+      {notes.map((note, index) => (
+        <motion.div
           key={note.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: index * 0.05 }}
           onClick={() => router.push(`/notes/${note.id}`)}
           className="relative cursor-pointer border rounded-lg p-4 shadow-sm hover:shadow-md transition hover:scale-[1.01] bg-white flex gap-4"
         >
@@ -82,12 +86,11 @@ export default function NoteListView() {
             </p>
           </div>
 
-          {/* 💬 Jumlah komentar di pojok kanan bawah */}
           <div className="absolute bottom-2 right-3 flex items-center text-gray-500 text-xs gap-1">
             <MessageSquare className="w-4 h-4" />
             {commentCounts[note.id] ?? 0}
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );

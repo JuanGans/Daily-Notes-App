@@ -5,6 +5,8 @@ import CommentForm from '../components/comments/CommentForm';
 import CommentList from '../components/comments/CommentList';
 import { getToken } from '@/utils/auth';
 import { parseJwt } from '@/utils/parseJwt';
+import { motion, AnimatePresence } from 'framer-motion';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 interface Note {
   id: number;
@@ -29,6 +31,7 @@ export default function NoteDetail() {
   const userRole = user?.role || 'USER';
 
   const [refreshComments, setRefreshComments] = useState(false);
+  const [showBackModal, setShowBackModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -54,55 +57,91 @@ export default function NoteDetail() {
     setRefreshComments((prev) => !prev);
   };
 
+  const handleBack = () => {
+    setShowBackModal(true);
+  };
+
+  const confirmBack = () => {
+    setShowBackModal(false);
+    router.back();
+  };
+
   if (loading) return <p className="p-6 text-center">Loading...</p>;
   if (!note) return <p className="p-6 text-center">Catatan tidak ditemukan.</p>;
 
   return (
-    <main className="max-w-3xl mx-auto p-6 bg-white rounded shadow mt-6">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-blue-600 hover:underline mb-4"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        Kembali
-      </button>
+    <>
+      <AnimatePresence>
+        <motion.main
+          className="max-w-3xl mx-auto p-6 bg-white rounded shadow mt-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+        >
+          {/* Tombol Kembali */}
+          <div className="flex justify-start mb-4">
+            <button
+              onClick={handleBack}
+              className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition"
+              title="Kembali"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          </div>
 
-      <h1 className="text-4xl font-bold mb-1">{note.title}</h1>
-      <p className="text-gray-500 mb-4">
-        <strong>Author:</strong> {note.userName || 'Unknown'}
-      </p>
+          <h1 className="text-4xl font-bold mb-1">{note.title}</h1>
+          <p className="text-gray-500 mb-4">
+            <strong>Author:</strong> {note.userName || 'Unknown'}
+          </p>
 
-      <div className="text-gray-600 mb-6 whitespace-pre-wrap">{note.body}</div>
+          <div className="text-gray-600 mb-6 whitespace-pre-wrap">{note.body}</div>
 
-      <p>
-        <strong>Tanggal Mulai:</strong> {note.startDate?.slice(0, 10) || '-'}
-      </p>
-      <p>
-        <strong>Tanggal Selesai:</strong> {note.endDate?.slice(0, 10) || '-'}
-      </p>
+          <p>
+            <strong>Tanggal Mulai:</strong> {note.startDate?.slice(0, 10) || '-'}
+          </p>
+          <p>
+            <strong>Tanggal Selesai:</strong> {note.endDate?.slice(0, 10) || '-'}
+          </p>
 
-      {note.imageUrl && (
-        <img
-          src={note.imageUrl}
-          alt={note.title}
-          className="mt-6 max-w-full rounded shadow"
-        />
-      )}
+          {note.imageUrl && (
+            <motion.img
+              src={note.imageUrl}
+              alt={note.title}
+              className="mt-6 max-w-full rounded shadow"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+            />
+          )}
 
-      {/* 💬 Komentar */}
-      {token && (
-        <CommentForm
-          noteId={note.id}
-          token={token}
-          onSuccess={handleCommentAdded}
-        />
-      )}
-      <CommentList
-        noteId={note.id}
-        token={token}
-        userRole={userRole}
-        refreshTrigger={refreshComments}
+          {/* 💬 Komentar */}
+          {token && (
+            <CommentForm
+              noteId={note.id}
+              token={token}
+              onSuccess={handleCommentAdded}
+            />
+          )}
+          <CommentList
+            noteId={note.id}
+            token={token}
+            userRole={userRole}
+            refreshTrigger={refreshComments}
+          />
+        </motion.main>
+      </AnimatePresence>
+
+      {/* Modal Konfirmasi Kembali */}
+      <ConfirmationModal
+        isOpen={showBackModal}
+        title="Kembali?"
+        message="Apakah Anda yakin ingin kembali ke halaman sebelumnya?"
+        onCancel={() => setShowBackModal(false)}
+        onConfirm={confirmBack}
+        confirmText="Ya, Kembali"
+        cancelText="Batal"
       />
-    </main>
+    </>
   );
 }

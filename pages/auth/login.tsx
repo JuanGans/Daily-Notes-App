@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import InteractiveLogo from '../components/InteractiveLogo/InteractiveLogo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -97,8 +98,8 @@ export default function LoginPage() {
             Daftar
           </button>
 
-          <div className="text-center mt-4">
-            <img src="https://i.ibb.co/JFv8xxpc/image.png" alt="Logo" className="mx-auto h-24" />
+          <div className="flex justify-center mt-6">
+            <InteractiveLogo size="5px" isOpen={true} />
           </div>
         </form>
       </div>

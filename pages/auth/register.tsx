@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
+import InteractiveLogo from '../components/InteractiveLogo/InteractiveLogo';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -86,9 +87,9 @@ export default function RegisterPage() {
             <a href="/auth/login" className="text-blue-300 underline">Login</a>
           </p>
 
-          <div className="text-center mt-4">
-            <img src="https://i.ibb.co/JFv8xxpc/image.png" alt="Logo" className="mx-auto h-24" />
-          </div>
+            <div className="flex justify-center mt-6">
+              <InteractiveLogo size="5px" isOpen={true} />
+            </div>
         </form>
       </div>
     </div>

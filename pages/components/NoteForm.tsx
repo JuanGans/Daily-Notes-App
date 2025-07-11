@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { jwtDecode } from 'jwt-decode';
 import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface NoteFormProps {
   onSuccess?: () => void;
@@ -9,7 +12,7 @@ interface NoteFormProps {
     id?: number;
     title?: string;
     body?: string;
-    startDate?: string;
+    startDate?: string; // format "dd-mm-yyyy"
     endDate?: string;
     imageUrl?: string;
   };
@@ -21,11 +24,36 @@ interface DecodedToken {
   role: 'USER' | 'ADMIN';
 }
 
+// Helper: dd-mm-yyyy -> Date
+const parseDMYtoDate = (value: string): Date | null => {
+  const parts = value.split('-');
+  if (parts.length !== 3) return null;
+  const [day, month, year] = parts;
+  const isoString = `${year}-${month}-${day}`;
+  const date = new Date(isoString);
+  return isNaN(date.getTime()) ? null : date;
+};
+
+// Helper: Date -> dd-mm-yyyy
+const formatDateToDMY = (date: Date | null): string => {
+  if (!date) return '';
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
 export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
   const [title, setTitle] = useState(initialData?.title || '');
   const [body, setBody] = useState(initialData?.body || '');
   const [startDate, setStartDate] = useState(initialData?.startDate || '');
   const [endDate, setEndDate] = useState(initialData?.endDate || '');
+  const [startDateRaw, setStartDateRaw] = useState<Date | null>(
+    initialData?.startDate ? parseDMYtoDate(initialData.startDate) : null
+  );
+  const [endDateRaw, setEndDateRaw] = useState<Date | null>(
+    initialData?.endDate ? parseDMYtoDate(initialData.endDate) : null
+  );
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || '');
   const [uploading, setUploading] = useState(false);
   const [userName, setUserName] = useState<string>('');
@@ -75,6 +103,16 @@ export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
     }
   };
 
+  const resetForm = () => {
+    setTitle('');
+    setBody('');
+    setStartDate('');
+    setEndDate('');
+    setStartDateRaw(null);
+    setEndDateRaw(null);
+    setImageUrl('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -108,15 +146,25 @@ export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
       }
 
       toast.success(initialData?.id ? 'Catatan berhasil diubah!' : 'Catatan berhasil ditambahkan!');
-      onSuccess ? onSuccess() : router.push('/');
+
+      if (initialData?.id) {
+        onSuccess ? onSuccess() : router.push('/');
+      } else {
+        resetForm();
+        onSuccess?.();
+      }
     } catch {
       toast.error('Terjadi kesalahan saat menyimpan catatan');
     }
   };
 
   return (
-    <form
+    <motion.form
       onSubmit={handleSubmit}
+      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+      transition={{ duration: 0.4, ease: 'easeInOut' }}
       className="max-w-xl mx-auto bg-white p-6 rounded-lg shadow-lg space-y-6"
     >
       <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">
@@ -148,20 +196,34 @@ export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
       />
 
       <div className="grid grid-cols-2 gap-4">
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          required
-          className="w-full px-4 py-3 border border-gray-300 rounded-md"
-        />
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          required
-          className="w-full px-4 py-3 border border-gray-300 rounded-md"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
+          <DatePicker
+            selected={startDateRaw}
+            onChange={(date) => {
+              setStartDateRaw(date);
+              setStartDate(formatDateToDMY(date));
+            }}
+            dateFormat="dd-MM-yyyy"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md"
+            placeholderText="Pilih tanggal mulai"
+            maxDate={endDateRaw || undefined}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Selesai</label>
+          <DatePicker
+            selected={endDateRaw}
+            onChange={(date) => {
+              setEndDateRaw(date);
+              setEndDate(formatDateToDMY(date));
+            }}
+            dateFormat="dd-MM-yyyy"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md"
+            placeholderText="Pilih tanggal selesai"
+            minDate={startDateRaw || undefined}
+          />
+        </div>
       </div>
 
       <div>
@@ -189,6 +251,6 @@ export default function NoteForm({ onSuccess, initialData }: NoteFormProps) {
       >
         {initialData?.id ? 'Update Catatan' : 'Tambah Catatan'}
       </button>
-    </form>
+    </motion.form>
   );
 }
