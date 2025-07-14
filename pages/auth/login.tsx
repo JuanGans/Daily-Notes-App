@@ -44,7 +44,7 @@ export default function LoginPage() {
 
     localStorage.setItem('token', data.token);
     toast.success('Login berhasil!');
-    router.push('/');
+    router.push('/home');
   } catch (err) {
     console.error('Login error:', err);
     toast.error('Terjadi kesalahan saat login');
