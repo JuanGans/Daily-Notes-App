@@ -87,9 +87,11 @@ export default function RegisterPage() {
             <a href="/auth/login" className="text-blue-300 underline">Login</a>
           </p>
 
-            <div className="flex justify-center mt-6">
+          <div className="flex justify-center mt-6">
+            <a href="/" aria-label="Kembali ke halaman utama">
               <InteractiveLogo size="5px" isOpen={true} />
-            </div>
+            </a>
+          </div>
         </form>
       </div>
     </div>

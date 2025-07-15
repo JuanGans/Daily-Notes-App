@@ -99,7 +99,9 @@ export default function LoginPage() {
           </button>
 
           <div className="flex justify-center mt-6">
-            <InteractiveLogo size="5px" isOpen={true} />
+            <a href="/" aria-label="Kembali ke halaman utama">
+              <InteractiveLogo size="5px" isOpen={true} />
+            </a>
           </div>
         </form>
       </div>

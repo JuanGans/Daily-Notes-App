@@ -5,3 +5,28 @@
 html {
   scroll-behavior: smooth;
 }
+
+@keyframes slide {
+  0% {
+    transform: translateX(-30%);
+  }
+  50% {
+    transform: translateX(30%);
+  }
+  100% {
+    transform: translateX(-30%);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-slide {
+  animation: slide 4s ease-in-out infinite, pulseGlow 2s ease-in-out infinite;
+}

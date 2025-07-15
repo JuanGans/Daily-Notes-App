@@ -57,7 +57,10 @@ export const FloatingNav = ({
             <span>{navItem.name}</span>
           </a>
         ))}
-        <button className="relative border border-neutral-300 dark:border-white/30 text-sm text-black dark:text-white font-medium px-4 py-1.5 rounded-full">
+        <button
+          onClick={() => window.location.href = "/auth/login"}
+          className="relative border border-neutral-300 dark:border-white/30 text-sm text-black dark:text-white font-medium px-4 py-1.5 rounded-full"
+        >
           Login
           <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent" />
         </button>
